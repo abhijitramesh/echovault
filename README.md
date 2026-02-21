@@ -6,7 +6,7 @@
 
 **Never forget a conversation, task, or decision again.**
 
-[Demo Video](#-demo) • [Try It Live](#-quick-start) • [Technical Deep Dive](#-technical-architecture)
+[Screenshots](#-screenshots) • [Quick Start](#-quick-start) • [Technical Deep Dive](#-technical-architecture)
 
 ---
 
@@ -259,66 +259,6 @@ First-class MCP server with:
 | **Smallest.ai Pulse** | Fast, affordable voice transcription optimized for real-time use |
 | **TypeScript** | Type safety across full stack (frontend, backend, MCP server) |
 | **Tailwind CSS** | Rapid UI development with custom cyberpunk theme |
-
----
-
-## 🎬 Demo
-
-### Video Walkthrough
-_[TODO: Add demo video showing voice capture → search → MCP integration]_
-
-### Live Demo Features
-
-**1. Voice Capture with Visual Feedback**
-- Animated waveform during recording
-- Pulsing "REC" indicator
-- Real-time processing status
-
-**2. Intelligent Search Interface**
-- Suggested queries: "What tasks do I have?", "What meetings did I have?"
-- AI-synthesized answers with source attribution
-- Relevance scores for each memory
-
-**3. Cyberpunk UI Design**
-- Animated neon borders that trace around cards
-- Scanline overlay for authentic CRT effect
-- Glitch hover effects on memory cards
-- Color-coded tags:
-  - 🟦 Cyan: People
-  - 🟨 Amber: Tasks
-  - 🟪 Purple: Topics
-  - 🩷 Pink: Decisions
-
-**4. MCP Integration Demo**
-```
-User in Claude Desktop: "What plans do I have this week?"
-Claude automatically invokes: get_tasks tool
-Returns: Formatted list of all tasks with dates and sources
-```
-
-### Creative Use Cases Demo
-
-**Scenario 1: The Forgetful Founder**
-```
-9:00 AM - Voice: "Had investor call with Alex. They're interested in $2M Series A. Need to send deck by Monday."
-           → Extracts: People: [Alex], Tasks: [Send deck by Monday], Topics: [Series A, Fundraising]
-
-2:00 PM - Search: "What did Alex say about funding?"
-           → Answer: "Alex expressed interest in a $2M Series A investment. You need to send them the deck by Monday."
-```
-
-**Scenario 2: The Student**
-```
-During lecture - Text: "Prof mentioned midterm covers chapters 5-8, focus on neural networks"
-Before exam - Search: "What chapters are on the midterm?"
-              → Returns exact chapter range and topic focus
-```
-
-**Scenario 3: The MCP Power User**
-```
-In Claude Code: "I mentioned a bug fix last week - what was it?"
-Claude auto-searches memories and returns the exact conversation
-```
 
 ---
 
