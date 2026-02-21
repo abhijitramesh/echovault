@@ -19,6 +19,48 @@
 
 ---
 
+## 📸 Screenshots
+
+<div align="center">
+
+### Full Application View
+![EchoVault Hero](public/screenshots/hero.png)
+
+</div>
+
+<table>
+<tr>
+<td width="50%">
+
+### Voice & Text Input
+![Voice Recorder](public/screenshots/voice-recorder.png)
+
+*Capture memories via voice recording with animated waveform or quick text input*
+
+</td>
+<td width="50%">
+
+### Intelligent Search
+![Search Section](public/screenshots/search-section.png)
+
+*Ask natural language questions and get AI-synthesized answers*
+
+</td>
+</tr>
+<tr>
+<td colspan="2">
+
+### Memory Timeline
+![Memory List](public/screenshots/memory-list.png)
+
+*Real-time memory stream with color-coded tags: 🟦 People • 🟨 Tasks • 🟪 Topics • 🩷 Decisions*
+
+</td>
+</tr>
+</table>
+
+---
+
 ## 🎯 The Problem (Problem Clarity & Relevance)
 
 **We're drowning in information but starving for memory.**
