@@ -3,14 +3,15 @@
 import { useState } from "react";
 import { useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { Search, Cpu, Loader2, ChevronRight, Terminal } from "lucide-react";
 
 interface Memory {
   _id: string;
   summary: string;
   rawText: string;
-  people: string[];
-  tasks: string[];
-  topics: string[];
+  people?: string[];
+  tasks?: string[];
+  topics?: string[];
   score?: number;
 }
 
@@ -19,6 +20,13 @@ interface SearchResult {
   memories: Memory[];
 }
 
+const exampleQuestions = [
+  "What did I discuss with Sarah last week?",
+  "What tasks am I working on?",
+  "What decisions have I made recently?",
+  "Summarize my meetings this month",
+];
+
 export default function SearchChat() {
   const [query, setQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
@@ -26,17 +34,18 @@ export default function SearchChat() {
 
   const searchMemories = useAction(api.search.searchMemories);
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!query.trim()) return;
+  const handleSearch = async (searchQuery?: string) => {
+    const q = searchQuery || query;
+    if (!q.trim()) return;
 
-    console.log("[SearchChat] Starting search for query:", query);
+    console.log("[SearchChat] Starting search for query:", q);
+    setQuery(q);
     setIsSearching(true);
     setResult(null);
 
     try {
       console.log("[SearchChat] Calling searchMemories action...");
-      const searchResult = await searchMemories({ query });
+      const searchResult = await searchMemories({ query: q });
       console.log("[SearchChat] Search result received:", {
         answerLength: searchResult.answer?.length,
         memoriesFound: searchResult.memories?.length,
@@ -56,117 +65,154 @@ export default function SearchChat() {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg p-6">
-      <h2 className="text-xl font-semibold mb-4">Ask Your Memories</h2>
+    <div className="neon-card rounded-md overflow-hidden">
+      {/* Section header */}
+      <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: '1px solid #3f3f46' }}>
+        <div className="flex items-center gap-2.5">
+          <Terminal className="size-4" style={{ color: '#ff2d7b' }} />
+          <h2 className="font-mono text-[11px] font-bold tracking-[0.2em] uppercase glow-pink" style={{ color: '#ff2d7b' }}>
+            Query Interface
+          </h2>
+        </div>
+        <span className="font-mono text-[10px] tracking-[0.15em] uppercase" style={{ color: '#3f3f46' }}>
+          {isSearching ? "[ Searching ]" : "[ Awaiting ]"}
+        </span>
+      </div>
 
-      <form onSubmit={handleSearch} className="flex gap-2 mb-4">
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="What tasks do I have? What did I discuss with John?"
-          className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          disabled={isSearching}
-        />
-        <button
-          type="submit"
-          disabled={isSearching || !query.trim()}
-          className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
-        >
-          {isSearching ? (
-            <>
-              <svg
-                className="w-4 h-4 animate-spin"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                />
-              </svg>
-              Searching...
-            </>
-          ) : (
-            <>
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-              Search
-            </>
-          )}
-        </button>
-      </form>
+      <div className="p-5 flex flex-col gap-5">
+        {/* Search bar */}
+        <div className="flex gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4" style={{ color: '#3f3f46' }} />
+            <input
+              type="text"
+              placeholder="> query your memory vault_"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+              disabled={isSearching}
+              className="neon-input w-full h-11 rounded-md pl-10 pr-4 font-mono text-sm disabled:opacity-40"
+            />
+          </div>
+          <button
+            onClick={() => handleSearch()}
+            disabled={!query.trim() || isSearching}
+            className="h-11 px-6 rounded-md font-mono text-[11px] font-semibold tracking-[0.15em] uppercase cyber-btn cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center"
+          >
+            {isSearching ? <Loader2 className="size-4 animate-spin" /> : "Execute"}
+          </button>
+        </div>
 
-      {result && (
-        <div className="space-y-4">
-          {/* AI Answer */}
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-            <div className="flex items-start gap-2">
-              <svg
-                className="w-5 h-5 text-green-600 mt-0.5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-                />
-              </svg>
-              <p className="text-gray-800 whitespace-pre-wrap">{result.answer}</p>
+        {/* Example queries */}
+        {!result && !isSearching && (
+          <div className="flex flex-col gap-3">
+            <p className="font-mono text-[10px] tracking-[0.15em] uppercase" style={{ color: '#3f3f46' }}>
+              Suggested Queries:
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {exampleQuestions.map((question) => (
+                <button
+                  key={question}
+                  onClick={() => handleSearch(question)}
+                  className="rounded-md px-3 py-1.5 font-mono text-[10px] tracking-wide cursor-pointer transition-all neon-tag-cyan hover:shadow-[0_0_12px_rgba(14,231,231,0.15)]"
+                >
+                  {question}
+                </button>
+              ))}
             </div>
           </div>
+        )}
 
-          {/* Related Memories */}
-          {result.memories.length > 0 && (
-            <div>
-              <h3 className="text-sm font-medium text-gray-500 mb-2">
-                Based on {result.memories.length} memor{result.memories.length === 1 ? "y" : "ies"}:
-              </h3>
+        {/* Loading */}
+        {isSearching && (
+          <div className="flex flex-col gap-4">
+            <div className="rounded-md p-5" style={{ background: 'rgba(14, 231, 231, 0.04)', border: '1px solid rgba(14, 231, 231, 0.15)' }}>
+              <div className="flex items-center gap-2.5 mb-4">
+                <Loader2 className="size-3.5 animate-spin" style={{ color: '#0ee7e7' }} />
+                <span className="font-mono text-[10px] tracking-[0.2em] uppercase glow-cyan-subtle" style={{ color: '#0ee7e7' }}>
+                  Processing neural query...
+                </span>
+              </div>
               <div className="space-y-2">
+                {[100, 85, 65].map((w, i) => (
+                  <div
+                    key={i}
+                    className="h-2 rounded-sm animate-pulse"
+                    style={{ width: `${w}%`, background: 'rgba(14, 231, 231, 0.1)', animationDelay: `${i * 200}ms` }}
+                  />
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="rounded-md p-3 flex items-center gap-3" style={{ border: '1px solid #3f3f46', background: '#27272a' }}>
+                  <div className="h-3 w-3 rounded-sm animate-pulse" style={{ background: '#3f3f46' }} />
+                  <div className="flex-1 space-y-1.5">
+                    <div className="h-2.5 rounded-sm animate-pulse" style={{ width: '70%', background: '#3f3f46', animationDelay: `${i * 150}ms` }} />
+                    <div className="h-2 rounded-sm animate-pulse" style={{ width: '30%', background: '#52525b', animationDelay: `${i * 200}ms` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Results */}
+        {result && !isSearching && (
+          <div className="flex flex-col gap-5 animate-in fade-in-0 slide-in-from-bottom-3 duration-500">
+            {/* AI Answer */}
+            <div className="rounded-md p-5 box-glow-cyan" style={{ background: 'rgba(14, 231, 231, 0.03)', border: '1px solid rgba(14, 231, 231, 0.15)' }}>
+              <div className="flex items-start gap-4">
+                <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md" style={{ border: '1px solid rgba(14, 231, 231, 0.3)', background: 'rgba(14, 231, 231, 0.08)' }}>
+                  <Cpu className="size-4" style={{ color: '#0ee7e7' }} />
+                </div>
+                <div>
+                  <p className="font-mono text-[10px] font-bold tracking-[0.2em] uppercase mb-2 glow-cyan-subtle" style={{ color: '#0ee7e7' }}>
+                    Neural Response
+                  </p>
+                  <p className="text-sm leading-relaxed" style={{ color: '#a1a1aa' }}>
+                    {result.answer}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Related memories */}
+            {result.memories && result.memories.length > 0 && (
+              <div className="flex flex-col gap-2.5">
+                <p className="font-mono text-[10px] tracking-[0.15em] uppercase" style={{ color: '#3f3f46' }}>
+                  Linked Memory Nodes
+                </p>
                 {result.memories.map((memory) => (
                   <div
                     key={memory._id}
-                    className="bg-gray-50 rounded-lg p-3 text-sm"
+                    className="group flex items-center justify-between rounded-md p-3.5 cursor-pointer transition-all glitch-hover"
+                    style={{ border: '1px solid #3f3f46', background: '#27272a' }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = 'rgba(14, 231, 231, 0.4)';
+                      e.currentTarget.style.background = 'rgba(14, 231, 231, 0.05)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = '#3f3f46';
+                      e.currentTarget.style.background = '#27272a';
+                    }}
                   >
-                    <p className="font-medium text-gray-700">{memory.summary}</p>
-                    <p className="text-gray-500 text-xs mt-1 line-clamp-1">
-                      {memory.rawText}
-                    </p>
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <ChevronRight className="size-3 transition-colors shrink-0" style={{ color: '#3f3f46' }} />
+                      <span className="font-mono text-xs truncate" style={{ color: '#d4d4d8' }}>{memory.summary}</span>
+                    </div>
                     {memory.score !== undefined && (
-                      <span className="text-xs text-gray-400">
-                        Relevance: {Math.round(memory.score * 100)}%
+                      <span className="font-mono text-[10px] shrink-0 ml-3" style={{ color: '#3f3f46' }}>
+                        {Math.round(memory.score * 100)}%
                       </span>
                     )}
                   </div>
                 ))}
               </div>
-            </div>
-          )}
-        </div>
-      )}
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

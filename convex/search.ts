@@ -15,15 +15,42 @@ export const searchMemories = action({
     const queryEmbedding = await generateEmbedding(args.query);
     console.log("[search.searchMemories] Query embedding generated");
 
-    // Perform vector search
+    // Perform vector search with higher limit
     console.log("[search.searchMemories] Performing vector search...");
-    const results = await ctx.vectorSearch("memories", "by_embedding", {
+    const vectorResults = await ctx.vectorSearch("memories", "by_embedding", {
       vector: queryEmbedding,
-      limit: 5,
+      limit: 10,
     });
-    console.log("[search.searchMemories] Vector search returned", results.length, "results");
+    console.log("[search.searchMemories] Vector search returned", vectorResults.length, "results");
 
-    if (results.length === 0) {
+    // Also do text-based search for people/topics mentioned in the query
+    console.log("[search.searchMemories] Performing text-based search...");
+    const textResults = await ctx.runQuery(api.search.searchByText, {
+      query: args.query,
+    });
+    console.log("[search.searchMemories] Text search returned", textResults.length, "results");
+
+    // Combine and deduplicate results
+    const allResultIds = new Set<string>();
+    const combinedResults: any[] = [];
+
+    // Add vector results first (they're usually more relevant)
+    for (const result of vectorResults) {
+      allResultIds.add(result._id);
+      combinedResults.push({ _id: result._id, _score: result._score });
+    }
+
+    // Add text results that aren't already included
+    for (const result of textResults) {
+      if (!allResultIds.has(result._id)) {
+        allResultIds.add(result._id);
+        combinedResults.push({ _id: result._id, _score: 0.7 }); // Give them a decent score
+      }
+    }
+
+    console.log("[search.searchMemories] Combined results:", combinedResults.length);
+
+    if (combinedResults.length === 0) {
       console.log("[search.searchMemories] No results found");
       return {
         answer: "I couldn't find any relevant memories for your query.",
@@ -34,7 +61,7 @@ export const searchMemories = action({
     // Fetch full memory documents
     console.log("[search.searchMemories] Fetching full memory documents...");
     const memories = await Promise.all(
-      results.map(async (result) => {
+      combinedResults.slice(0, 10).map(async (result) => {
         const memory = await ctx.runQuery(api.search.getMemoryById, {
           id: result._id,
         });
@@ -63,6 +90,62 @@ export const getMemoryById = query({
   args: { id: v.id("memories") },
   handler: async (ctx, args) => {
     return await ctx.db.get(args.id);
+  },
+});
+
+// Text-based search for people, topics, and keywords
+export const searchByText = query({
+  args: { query: v.string() },
+  handler: async (ctx, args) => {
+    const queryLower = args.query.toLowerCase();
+
+    // Extract potential names (capitalized words)
+    const words = args.query.split(/\s+/);
+    const potentialNames = words.filter(w => w.length > 2 && w[0] === w[0].toUpperCase());
+
+    console.log("[search.searchByText] Searching for:", queryLower);
+    console.log("[search.searchByText] Potential names:", potentialNames);
+
+    // Get all memories
+    const allMemories = await ctx.db.query("memories").collect();
+
+    // Filter memories that match the query
+    const matches = allMemories.filter(memory => {
+      // Check if any people match
+      const peopleMatch = memory.people.some(person =>
+        person.toLowerCase().includes(queryLower) ||
+        potentialNames.some(name => person.toLowerCase().includes(name.toLowerCase()))
+      );
+
+      // Check if any topics match
+      const topicsMatch = memory.topics.some(topic =>
+        topic.toLowerCase().includes(queryLower)
+      );
+
+      // Check if any tasks match
+      const tasksMatch = memory.tasks.some(task =>
+        task.toLowerCase().includes(queryLower)
+      );
+
+      // Check if any decisions match
+      const decisionsMatch = memory.decisions.some(decision =>
+        decision.toLowerCase().includes(queryLower)
+      );
+
+      // Check if summary or raw text contains the query
+      const textMatch =
+        memory.summary.toLowerCase().includes(queryLower) ||
+        memory.rawText.toLowerCase().includes(queryLower);
+
+      return peopleMatch || topicsMatch || tasksMatch || decisionsMatch || textMatch;
+    });
+
+    console.log("[search.searchByText] Found", matches.length, "text-based matches");
+
+    // Return sorted by creation time (most recent first)
+    return matches
+      .sort((a, b) => b.createdAt - a.createdAt)
+      .slice(0, 10);
   },
 });
 

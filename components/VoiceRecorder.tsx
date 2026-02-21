@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
-import { useMutation, useAction } from "convex/react";
+import { useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { Mic, Plus, Loader2, Radio } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function VoiceRecorder() {
   const [isRecording, setIsRecording] = useState(false);
@@ -64,7 +66,6 @@ export default function VoiceRecorder() {
     console.log("[VoiceRecorder] Processing audio, blob size:", audioBlob.size);
     setIsProcessing(true);
     try {
-      // Send to smallest.ai for transcription
       const formData = new FormData();
       formData.append("file", audioBlob, "audio.webm");
 
@@ -100,8 +101,15 @@ export default function VoiceRecorder() {
     }
   };
 
-  const handleTextSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleRecord = useCallback(() => {
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
+  }, [isRecording, startRecording, stopRecording]);
+
+  const handleAddMemory = useCallback(async () => {
     if (!textInput.trim()) return;
 
     console.log("[VoiceRecorder] Submitting text memory:", textInput);
@@ -117,94 +125,93 @@ export default function VoiceRecorder() {
     } finally {
       setIsProcessing(false);
     }
-  };
+  }, [textInput, addMemory]);
 
   return (
-    <div className="bg-white rounded-xl shadow-lg p-6">
-      <h2 className="text-xl font-semibold mb-4">Add Memory</h2>
-
-      {/* Voice Recording Button */}
-      <div className="flex justify-center mb-6">
-        <button
-          onClick={isRecording ? stopRecording : startRecording}
-          disabled={isProcessing}
-          className={`w-24 h-24 rounded-full flex items-center justify-center transition-all ${
-            isRecording
-              ? "bg-red-500 hover:bg-red-600 animate-pulse"
-              : isProcessing
-              ? "bg-gray-400 cursor-not-allowed"
-              : "bg-blue-500 hover:bg-blue-600"
-          }`}
-        >
-          {isProcessing ? (
-            <svg
-              className="w-8 h-8 text-white animate-spin"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              />
-            </svg>
-          ) : isRecording ? (
-            <svg
-              className="w-8 h-8 text-white"
-              fill="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <rect x="6" y="6" width="12" height="12" rx="2" />
-            </svg>
-          ) : (
-            <svg
-              className="w-8 h-8 text-white"
-              fill="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
-              <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
-            </svg>
-          )}
-        </button>
+    <div className="neon-card rounded-md overflow-hidden">
+      {/* Section header */}
+      <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: '1px solid #3f3f46' }}>
+        <div className="flex items-center gap-2.5">
+          <Radio className="size-4" style={{ color: '#0ee7e7' }} />
+          <h2 className="font-mono text-[11px] font-bold tracking-[0.2em] uppercase glow-cyan-subtle" style={{ color: '#0ee7e7' }}>
+            Memory Capture
+          </h2>
+        </div>
+        <span className="font-mono text-[10px] tracking-[0.15em] uppercase" style={{ color: isRecording ? '#ff2d55' : isProcessing ? '#eab308' : '#3f3f46' }}>
+          {isRecording ? "[ REC ]" : isProcessing ? "[ Encoding ]" : "[ Standby ]"}
+        </span>
       </div>
 
-      <p className="text-center text-gray-600 mb-6">
-        {isRecording
-          ? "Recording... Click to stop"
-          : isProcessing
-          ? "Processing..."
-          : "Click to record a memory"}
-      </p>
-
-      {/* Text Input Fallback */}
-      <div className="border-t pt-4">
-        <p className="text-sm text-gray-500 mb-2">Or type a memory:</p>
-        <form onSubmit={handleTextSubmit} className="flex gap-2">
-          <input
-            type="text"
+      <div className="p-5 flex flex-col gap-4">
+        <div className="relative">
+          <textarea
+            placeholder="> enter neural input stream_"
             value={textInput}
             onChange={(e) => setTextInput(e.target.value)}
-            placeholder="Type your memory here..."
-            className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             disabled={isProcessing}
+            className="neon-input w-full min-h-32 resize-none rounded-md px-4 py-3 font-mono text-sm leading-relaxed"
+            style={{ background: '#1f1f23' }}
           />
+          {isRecording && (
+            <div className="absolute bottom-3 left-4 flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-75" style={{ background: '#ff2d55' }} />
+                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full" style={{ background: '#ff2d55' }} />
+                </span>
+                <span className="font-mono text-[10px] font-bold tracking-[0.2em] uppercase glow-pink" style={{ color: '#ff2d7b' }}>
+                  Recording
+                </span>
+              </div>
+              {/* Waveform */}
+              <div className="flex items-center gap-[3px]">
+                {[...Array(16)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="w-[2px] rounded-full"
+                    style={{
+                      height: '3px',
+                      background: '#0ee7e7',
+                      boxShadow: '0 0 4px #0ee7e7',
+                      animation: `wave-bar ${0.3 + Math.random() * 0.5}s ease-in-out ${i * 0.04}s infinite`,
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="flex gap-3">
           <button
-            type="submit"
-            disabled={isProcessing || !textInput.trim()}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
+            onClick={handleRecord}
+            disabled={isProcessing}
+            className={cn(
+              "flex-1 flex items-center justify-center gap-2 rounded-md h-11 font-mono text-[11px] font-semibold tracking-[0.15em] uppercase transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed",
+              isRecording ? "cyber-btn-pink" : "cyber-btn"
+            )}
           >
-            Add
+            <Mic className={cn("size-3.5", isRecording && "animate-pulse")} />
+            {isRecording ? "Terminate" : "Voice Input"}
           </button>
-        </form>
+          <button
+            onClick={handleAddMemory}
+            disabled={!textInput.trim() || isProcessing}
+            className="flex-1 flex items-center justify-center gap-2 rounded-md h-11 font-mono text-[11px] font-semibold tracking-[0.15em] uppercase transition-all cursor-pointer cyber-btn disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            {isProcessing ? (
+              <>
+                <Loader2 className="size-3.5 animate-spin" />
+                Encoding...
+              </>
+            ) : (
+              <>
+                <Plus className="size-3.5" />
+                Store Memory
+              </>
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -1,8 +1,13 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #18181b;
+  --foreground: #e4e4e7;
+  --card: #27272a;
+  --card-foreground: #e4e4e7;
+  --neon-cyan: #0ee7e7;
+  --neon-pink: #ff2d7b;
+  --neon-purple: #a855f7;
 }
 
 @theme inline {
@@ -12,15 +17,217 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+body {
+  background-color: #18181b;
+  color: #e4e4e7;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* =============== CYBERPUNK GRID =============== */
+.cyber-grid {
+  background-color: #18181b;
+  background-image:
+    linear-gradient(rgba(14, 231, 231, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(14, 231, 231, 0.06) 1px, transparent 1px);
+  background-size: 50px 50px;
+}
+
+/* =============== SCANLINES =============== */
+.scanlines::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.08) 2px,
+    rgba(0, 0, 0, 0.08) 4px
+  );
+  z-index: 50;
+}
+
+/* =============== ANIMATIONS =============== */
+@keyframes border-trace {
+  0% { background-position: 0% 0%; }
+  100% { background-position: 200% 0%; }
+}
+
+@keyframes wave-bar {
+  0%, 100% { height: 3px; }
+  50% { height: 18px; }
+}
+
+@keyframes status-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(14, 231, 231, 0.7); }
+  50% { box-shadow: 0 0 0 8px rgba(14, 231, 231, 0); }
+}
+
+@keyframes flicker {
+  0%, 97%, 100% { opacity: 1; }
+  98% { opacity: 0.7; }
+  99% { opacity: 0.95; }
+}
+
+@keyframes glitch-shift {
+  0%, 90%, 100% { transform: translateX(0); }
+  92% { transform: translateX(-2px); }
+  94% { transform: translateX(2px); }
+  96% { transform: translateX(-1px); }
+  98% { transform: translateX(1px); }
+}
+
+/* =============== NEON CARD =============== */
+.neon-card {
+  position: relative;
+  background: #27272a;
+  border: 1px solid #3f3f46;
+  transition: all 0.3s ease;
+}
+
+.neon-card::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--neon-cyan) 20%,
+    var(--neon-pink) 40%,
+    transparent 60%,
+    var(--neon-cyan) 80%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: border-trace 6s linear infinite;
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0.35;
+  transition: opacity 0.3s ease;
+}
+
+.neon-card:hover::before {
+  opacity: 0.8;
+}
+
+.neon-card:hover {
+  box-shadow:
+    0 0 20px rgba(14, 231, 231, 0.08),
+    0 0 60px rgba(14, 231, 231, 0.04),
+    inset 0 1px 0 rgba(14, 231, 231, 0.06);
+}
+
+/* =============== GLOW EFFECTS =============== */
+.glow-cyan {
+  text-shadow: 0 0 7px var(--neon-cyan), 0 0 20px rgba(14, 231, 231, 0.3);
+}
+
+.glow-pink {
+  text-shadow: 0 0 7px var(--neon-pink), 0 0 20px rgba(255, 45, 123, 0.3);
+}
+
+.glow-cyan-subtle {
+  text-shadow: 0 0 10px rgba(14, 231, 231, 0.4);
+}
+
+.box-glow-cyan {
+  box-shadow: 0 0 15px rgba(14, 231, 231, 0.1), inset 0 0 15px rgba(14, 231, 231, 0.03);
+}
+
+.box-glow-pink {
+  box-shadow: 0 0 15px rgba(255, 45, 123, 0.1), inset 0 0 15px rgba(255, 45, 123, 0.03);
+}
+
+/* =============== STATUS DOT =============== */
+.status-dot {
+  animation: status-pulse 2s ease-in-out infinite;
+}
+
+/* =============== FLICKER =============== */
+.flicker {
+  animation: flicker 4s ease-in-out infinite;
+}
+
+/* =============== GLITCH =============== */
+.glitch-hover:hover {
+  animation: glitch-shift 0.5s ease-in-out;
+}
+
+/* =============== CYBERPUNK BUTTON =============== */
+.cyber-btn {
+  position: relative;
+  background: rgba(14, 231, 231, 0.06);
+  border: 1px solid rgba(14, 231, 231, 0.25);
+  color: var(--neon-cyan);
+  transition: all 0.2s ease;
+}
+
+.cyber-btn:hover:not(:disabled) {
+  background: rgba(14, 231, 231, 0.12);
+  border-color: rgba(14, 231, 231, 0.5);
+  box-shadow: 0 0 20px rgba(14, 231, 231, 0.15), inset 0 0 20px rgba(14, 231, 231, 0.05);
+}
+
+.cyber-btn-pink {
+  background: rgba(255, 45, 123, 0.06);
+  border: 1px solid rgba(255, 45, 123, 0.25);
+  color: var(--neon-pink);
+}
+
+.cyber-btn-pink:hover:not(:disabled) {
+  background: rgba(255, 45, 123, 0.12);
+  border-color: rgba(255, 45, 123, 0.5);
+  box-shadow: 0 0 20px rgba(255, 45, 123, 0.15), inset 0 0 20px rgba(255, 45, 123, 0.05);
+}
+
+/* =============== NEON INPUT =============== */
+.neon-input {
+  background: #1f1f23;
+  border: 1px solid #3f3f46;
+  color: #e4e4e7;
+  transition: all 0.2s ease;
+}
+
+.neon-input:focus {
+  border-color: rgba(14, 231, 231, 0.4);
+  box-shadow: 0 0 0 2px rgba(14, 231, 231, 0.08), 0 0 20px rgba(14, 231, 231, 0.06);
+  outline: none;
+}
+
+.neon-input::placeholder {
+  color: #3f3f46;
+}
+
+/* =============== NEON TAG =============== */
+.neon-tag-cyan {
+  background: rgba(14, 231, 231, 0.08);
+  border: 1px solid rgba(14, 231, 231, 0.2);
+  color: #0ee7e7;
+}
+
+.neon-tag-pink {
+  background: rgba(255, 45, 123, 0.08);
+  border: 1px solid rgba(255, 45, 123, 0.2);
+  color: #ff2d7b;
+}
+
+.neon-tag-purple {
+  background: rgba(168, 85, 247, 0.08);
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  color: #a855f7;
+}
+
+.neon-tag-amber {
+  background: rgba(234, 179, 8, 0.08);
+  border: 1px solid rgba(234, 179, 8, 0.2);
+  color: #eab308;
 }

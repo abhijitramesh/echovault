@@ -5,6 +5,8 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
+  ListPromptsRequestSchema,
+  GetPromptRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 
 // Get Convex URL from environment
@@ -37,6 +39,7 @@ const server = new Server(
   {
     capabilities: {
       tools: {},
+      prompts: {},
     },
   }
 );
@@ -48,14 +51,14 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "add_memory",
         description:
-          "Add a new memory to the personal memory store. Use this to save thoughts, meeting notes, decisions, tasks, or any information the user wants to remember.",
+          "Add a new memory to the personal memory store. Use this when user wants to: save information, remember something, store a note, record a meeting, save a task, log a decision, or keep track of anything. Automatically extracts people, tasks, topics, and decisions from the content.",
         inputSchema: {
           type: "object",
           properties: {
             text: {
               type: "string",
               description:
-                "The memory content to store. Can be a thought, note, meeting summary, task, decision, etc.",
+                "The memory content to store. Can be a thought, note, meeting summary, task, decision, reminder, plan, or any information to remember.",
             },
           },
           required: ["text"],
@@ -64,14 +67,14 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "search_memories",
         description:
-          "Search through stored memories using natural language. Returns relevant memories and an AI-synthesized answer based on the query.",
+          "Search through stored memories using natural language. Use this when user asks about: tasks, todos, plans, meetings, discussions, decisions, people they've talked to, or any past events/notes. Returns relevant memories and an AI-synthesized answer based on the query.",
         inputSchema: {
           type: "object",
           properties: {
             query: {
               type: "string",
               description:
-                "Natural language query to search memories. Examples: 'What tasks do I have?', 'What did I discuss with John?', 'What decisions have I made about the product?'",
+                "Natural language query to search memories. Examples: 'What tasks do I have?', 'What did I discuss with John?', 'What decisions have I made about the product?', 'What are my plans?', 'What meetings did I have?'",
             },
           },
           required: ["query"],
@@ -80,7 +83,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "get_tasks",
         description:
-          "Get all tasks extracted from memories. Returns a list of action items and todos that have been identified from stored memories.",
+          "Get all tasks, todos, action items, and plans extracted from memories. Use this when user asks about: tasks, todos, things to do, action items, plans, what needs to be done, upcoming work, or anything task-related. Returns a comprehensive list of all action items identified from stored memories.",
         inputSchema: {
           type: "object",
           properties: {},
@@ -97,6 +100,56 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
     ],
   };
+});
+
+// List available prompts
+server.setRequestHandler(ListPromptsRequestSchema, async () => {
+  return {
+    prompts: [
+      {
+        name: "memory-assistant",
+        description: "Activate memory-aware assistant mode",
+      },
+    ],
+  };
+});
+
+// Get prompt content
+server.setRequestHandler(GetPromptRequestSchema, async (request) => {
+  const { name } = request.params;
+
+  if (name === "memory-assistant") {
+    return {
+      messages: [
+        {
+          role: "user",
+          content: {
+            type: "text",
+            text: `You are a memory-aware assistant with access to the voice-memory system.
+
+IMPORTANT: Always proactively check the voice-memory system when the user asks about:
+- Tasks, todos, or action items ("What do I need to do?", "What are my tasks?", "What plans do I have?")
+- Past conversations or meetings ("What did I discuss with X?", "What meetings did I have?")
+- Decisions made ("What did I decide about X?")
+- People mentioned in memories ("Who did I talk to about X?")
+- Any past events, notes, or information
+
+Available tools from voice-memory:
+- search_memories: Search through all memories using natural language
+- get_tasks: Get all tasks, todos, and action items
+- add_memory: Store new information, notes, or memories
+- list_memories: List all stored memories
+
+When the user asks questions like "What plans do I have?", "What tasks am I working on?", or "What did I discuss with X?", you should AUTOMATICALLY use the appropriate tool without being explicitly asked.
+
+Always use the tools proactively to provide accurate, memory-based answers.`,
+          },
+        },
+      ],
+    };
+  }
+
+  throw new Error(`Unknown prompt: ${name}`);
 });
 
 // Handle tool calls
