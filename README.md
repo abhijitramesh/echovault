@@ -1,36 +1,172 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# EchoVault
+
+A personal memory engine that captures, stores, and retrieves your thoughts using voice or text. Powered by AI for intelligent extraction and semantic search.
+
+## Features
+
+- **Voice Recording**: Speak your thoughts and have them automatically transcribed
+- **Text Input**: Type memories directly when voice isn't convenient
+- **AI Extraction**: Claude automatically extracts people, tasks, topics, and decisions from your memories
+- **Semantic Search**: Ask natural language questions about your memories
+- **Real-time Sync**: Memories appear instantly across all connected clients
+- **MCP Integration**: Access your memories from Claude Desktop or Claude Code
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────┐
+│                    FRONTEND                         │
+│  VoiceRecorder → Record voice or type text          │
+│  SearchChat    → Ask questions about memories       │
+│  MemoryList    → View all stored memories           │
+└─────────────────────┬───────────────────────────────┘
+                      │
+┌─────────────────────▼───────────────────────────────┐
+│                 CONVEX BACKEND                      │
+│  • Stores memories with vector embeddings           │
+│  • Claude extracts: people, tasks, topics, decisions│
+│  • Vector search finds relevant memories            │
+│  • Claude synthesizes answers from memories         │
+└─────────────────────┬───────────────────────────────┘
+                      │
+┌─────────────────────▼───────────────────────────────┐
+│                 EXTERNAL APIs                       │
+│  smallest.ai  → Voice transcription                 │
+│  Claude API   → Extraction + answer synthesis       │
+│  OpenAI API   → Embeddings for semantic search      │
+└─────────────────────────────────────────────────────┘
+```
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- Node.js 18+
+- npm or yarn
+- API keys for:
+  - [Anthropic](https://console.anthropic.com/) (Claude)
+  - [OpenAI](https://platform.openai.com/) (embeddings)
+  - [Smallest.ai](https://smallest.ai/) (voice transcription - optional)
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/yourusername/echovault.git
+   cd echovault
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   cd mcp-server && npm install && cd ..
+   ```
+
+3. **Set up Convex**
+   ```bash
+   npx convex dev
+   ```
+   This will prompt you to create a Convex account and project.
+
+4. **Configure environment variables**
+
+   Create `.env.local`:
+   ```bash
+   CONVEX_DEPLOYMENT=dev:your-project-name
+   NEXT_PUBLIC_CONVEX_URL=https://your-project.convex.cloud
+   NEXT_PUBLIC_CONVEX_SITE_URL=https://your-project.convex.site
+   SMALLEST_API_KEY=your_smallest_api_key  # Optional, for voice
+   ```
+
+   In Convex Dashboard → Settings → Environment Variables:
+   ```
+   ANTHROPIC_API_KEY=sk-ant-...
+   OPENAI_API_KEY=sk-...
+   ```
+
+5. **Start the development server**
+   ```bash
+   # Terminal 1: Convex backend
+   npx convex dev
+
+   # Terminal 2: Next.js frontend
+   npm run dev
+   ```
+
+6. **Open http://localhost:3000**
+
+## Usage
+
+### Adding Memories
+
+- **Voice**: Click the microphone button, speak, then click stop
+- **Text**: Type in the text field and click "Add"
+
+### Searching Memories
+
+Type natural language questions like:
+- "What tasks do I have?"
+- "What did I discuss with John?"
+- "What decisions have I made about the product?"
+
+### MCP Integration (Claude Desktop)
+
+1. Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json`):
+   ```json
+   {
+     "mcpServers": {
+       "echovault": {
+         "command": "npx",
+         "args": ["tsx", "/path/to/echovault/mcp-server/index.ts"],
+         "env": {
+           "CONVEX_URL": "https://your-project.convex.site"
+         }
+       }
+     }
+   }
+   ```
+
+2. Restart Claude Desktop
+
+3. Use tools like:
+   - "Add a memory: I need to buy groceries tomorrow"
+   - "What memories do I have?"
+   - "What are my tasks?"
+
+## Project Structure
+
+```
+echovault/
+├── app/                    # Next.js app router
+│   ├── api/transcribe/     # Voice transcription endpoint
+│   ├── ConvexProvider.tsx  # Convex client provider
+│   ├── layout.tsx          # Root layout
+│   └── page.tsx            # Main page
+├── components/
+│   ├── VoiceRecorder.tsx   # Voice/text input component
+│   ├── MemoryList.tsx      # Display memories
+│   └── SearchChat.tsx      # Search interface
+├── convex/
+│   ├── schema.ts           # Database schema
+│   ├── memories.ts         # Memory CRUD + AI extraction
+│   ├── search.ts           # Vector search + AI synthesis
+│   └── http.ts             # HTTP endpoints for MCP
+├── mcp-server/
+│   ├── index.ts            # MCP server implementation
+│   └── package.json        # MCP dependencies
+└── lib/
+    ├── claude.ts           # Claude API helpers
+    └── smallest.ts         # Transcription helpers
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Tech Stack
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Frontend**: Next.js 14, React, Tailwind CSS
+- **Backend**: Convex (real-time database + serverless functions)
+- **AI**: Claude (extraction/synthesis), OpenAI (embeddings)
+- **Voice**: Smallest.ai Pulse API
+- **MCP**: Model Context Protocol for Claude integration
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## License
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT
