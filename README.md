@@ -487,7 +487,7 @@ Your Memories ← → Universal API ← → Any AI Model
 
 ## 🤝 Contributing
 
-Built with ❤️ for the [Hackathon Name] by [Your Name]
+Built with ❤️ for the Voice Hacksprint by Abhijit Ramesh
 
 Want to contribute? We'd love:
 - 🐛 Bug reports and feature requests
